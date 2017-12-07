@@ -1,7 +1,7 @@
-import {getBottomProgramName as getBottomProgramName1} from './task01';
+import {getBottomProgramName} from './task01';
+import {getCorrectWeightOfProgram} from './task02';
 
-test('task 01 example', () => {
-    const input = `
+const input = `
 pbga (66)
 xhth (57)
 ebii (61)
@@ -16,5 +16,11 @@ ugml (68) -> gyxo, ebii, jptl
 gyxo (61)
 cntj (57)    
     `;
-    expect(getBottomProgramName1(input)).toBe("tknk");
+
+test('task 01 example', () => {
+    expect(getBottomProgramName(input)).toBe("tknk");
+});
+
+test('task 02 example', () => {
+    expect(getCorrectWeightOfProgram(input)).toBe(60);
 });

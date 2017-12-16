@@ -1,39 +1,48 @@
 export const letThemDance = (length, instructions, repeat) =>
 {
-    let programs = createAlphabetList(length);
+    const programs = createAlphabetList(length);
     instructions = instructions.trim().split(',').map(parseInstruction);
+    const moves = createMoves(programs, instructions);
+    const newPrograms = executeMoves(programs, moves, repeat);
+    return newPrograms.join("");
+};
 
-    for (let j = 0; j < repeat; j++)
+const createMoves = (programs, instructions) =>
+{
+    const testResult = executeInstructions(programs, instructions);
+    const moves = [];
+
+    for (let index = 0; index < programs.length; index++)
     {
-        for (let i of instructions)
-        {
-            if (i.type === 's')
-            {
-                const end = programs.slice(-i.size);
-                const start = programs.slice(0, programs.length - i.size);
-                programs = end + start;
-            }
-            else if (i.type === 'x')
-            {
-                const char1 = programs[i.target1];
-                const char2 = programs[i.target2];
-                programs = programs.substr(0, i.target1) + char2 + programs.substr(i.target1 + 1);
-                programs = programs.substr(0, i.target2) + char1 + programs.substr(i.target2 + 1);
-            }
-            else if (i.type === 'p')
-            {
-                const index1 = programs.indexOf(i.target1);
-                const index2 = programs.indexOf(i.target2);
-                const char1 = programs[index1];
-                const char2 = programs[index2];
-                programs = programs.substr(0, index1) + char2 + programs.substr(index1 + 1);
-                programs = programs.substr(0, index2) + char1 + programs.substr(index2 + 1);
-            }
-        }
-        console.log(j);
+        const program = programs[index];
+        const newIndex = testResult.indexOf(program);
+        moves[index] = newIndex;
     }
 
-    return programs;
+    return moves;
+};
+
+const executeMoves = (programs, moves, repeat) =>
+{
+    const length = moves.length;
+    let oldProgram = programs;
+    let newPrograms = null;
+
+    for (let counter = 0; counter < repeat; counter++)
+    {
+        newPrograms = new Array(length);
+        console.log(oldProgram.join(""));
+
+        for (let index = 0; index < length; index++)
+        {
+            newPrograms[moves[index]] = oldProgram[index];
+        }
+        oldProgram = newPrograms;
+    }
+    console.log(newPrograms.join(""));
+
+
+    return newPrograms;
 };
 
 export const createAlphabetList = (length) =>
@@ -46,7 +55,36 @@ export const createAlphabetList = (length) =>
         programs[i] = String.fromCharCode(start + i);
     }
 
-    return programs.join("");
+    return programs;
+};
+
+const executeInstructions = (programs, instructions) =>
+{
+    let _programs = programs.slice(0);
+    for (let i of instructions)
+    {
+        if (i.type === 's')
+        {
+            const end = _programs.slice(-i.size);
+            const start = _programs.slice(0, _programs.length - i.size);
+            _programs = end.concat(start);
+        }
+        else if (i.type === 'x')
+        {
+            const temp = _programs[i.target1];
+            _programs[i.target1] = _programs[i.target2];
+            _programs[i.target2] = temp;
+        }
+        else if (i.type === 'p')
+        {
+            const index1 = _programs.indexOf(i.target1);
+            const index2 = _programs.indexOf(i.target2);
+            const temp = _programs[index1];
+            _programs[index1] = _programs[index2];
+            _programs[index2] = temp;
+        }
+    }
+    return _programs;
 };
 
 const parseInstruction = (str) =>

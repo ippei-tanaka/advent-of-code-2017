@@ -2,47 +2,9 @@ export const letThemDance = (length, instructions, repeat) =>
 {
     const programs = createAlphabetList(length);
     instructions = instructions.trim().split(',').map(parseInstruction);
-    const moves = createMoves(programs, instructions);
-    const newPrograms = executeMoves(programs, moves, repeat);
+    instructions = compressInstructions(instructions, programs);
+    const newPrograms = executeInstructions(instructions, programs, repeat);
     return newPrograms.join("");
-};
-
-const createMoves = (programs, instructions) =>
-{
-    const testResult = executeInstructions(programs, instructions);
-    const moves = [];
-
-    for (let index = 0; index < programs.length; index++)
-    {
-        const program = programs[index];
-        const newIndex = testResult.indexOf(program);
-        moves[index] = newIndex;
-    }
-
-    return moves;
-};
-
-const executeMoves = (programs, moves, repeat) =>
-{
-    const length = moves.length;
-    let oldProgram = programs;
-    let newPrograms = null;
-
-    for (let counter = 0; counter < repeat; counter++)
-    {
-        newPrograms = new Array(length);
-        console.log(oldProgram.join(""));
-
-        for (let index = 0; index < length; index++)
-        {
-            newPrograms[moves[index]] = oldProgram[index];
-        }
-        oldProgram = newPrograms;
-    }
-    console.log(newPrograms.join(""));
-
-
-    return newPrograms;
 };
 
 export const createAlphabetList = (length) =>
@@ -58,33 +20,119 @@ export const createAlphabetList = (length) =>
     return programs;
 };
 
-const executeInstructions = (programs, instructions) =>
+const compressInstructions = (instructions, programs) =>
 {
-    let _programs = programs.slice(0);
+    const pristinePrograms = (new Array(programs.length)).fill(0).map((i, index) => index);
+    let traceOfInstructions = pristinePrograms.slice(0);
+    let instructionsCompressed = false;
+    const compressedInstructions = [];
+
     for (let i of instructions)
     {
         if (i.type === 's')
         {
-            const end = _programs.slice(-i.size);
-            const start = _programs.slice(0, _programs.length - i.size);
-            _programs = end.concat(start);
+            const end = traceOfInstructions.slice(-i.size);
+            const start = traceOfInstructions.slice(0, traceOfInstructions.length - i.size);
+            traceOfInstructions = end.concat(start);
+            instructionsCompressed = true;
         }
         else if (i.type === 'x')
         {
-            const temp = _programs[i.target1];
-            _programs[i.target1] = _programs[i.target2];
-            _programs[i.target2] = temp;
+            const temp = traceOfInstructions[i.target1];
+            traceOfInstructions[i.target1] = traceOfInstructions[i.target2];
+            traceOfInstructions[i.target2] = temp;
+            instructionsCompressed = true;
         }
         else if (i.type === 'p')
         {
-            const index1 = _programs.indexOf(i.target1);
-            const index2 = _programs.indexOf(i.target2);
-            const temp = _programs[index1];
-            _programs[index1] = _programs[index2];
-            _programs[index2] = temp;
+            if (instructionsCompressed)
+            {
+                const moves = [];
+                for (let i = 0; i < traceOfInstructions.length; i++)
+                {
+                    moves[i] = traceOfInstructions.indexOf(i);
+                }
+                compressedInstructions.push({
+                    type: 'sx',
+                    moves
+                });
+
+                instructionsCompressed = false;
+                traceOfInstructions = pristinePrograms.slice(0);
+            }
+
+            compressedInstructions.push(i);
         }
     }
-    return _programs;
+
+    if (instructionsCompressed)
+    {
+        const moves = [];
+        for (let i = 0; i < traceOfInstructions.length; i++)
+        {
+            moves[i] = traceOfInstructions.indexOf(i);
+        }
+        compressedInstructions.push({
+            type: 'sx',
+            moves
+        });
+    }
+
+    return compressedInstructions;
+};
+
+const executeInstructions = (instructions, programs, repeat) =>
+{
+    let _programs = programs.slice(0);
+    const length = _programs.length;
+    const records = [_programs.join("")];
+    let loopStartPrograms = null;
+    let loopSize = null;
+
+    for (let counter = 1; counter <= repeat; counter++)
+    {
+        for (let i of instructions)
+        {
+            if (i.type === 'sx')
+            {
+                const oldProgram = _programs;
+                const newPrograms = new Array(length);
+                for (let index = 0; index < length; index++)
+                {
+                    newPrograms[i.moves[index]] = oldProgram[index];
+                }
+                _programs = newPrograms;
+            }
+            else if (i.type === 'p')
+            {
+                const index1 = _programs.indexOf(i.target1);
+                const index2 = _programs.indexOf(i.target2);
+                const temp = _programs[index1];
+                _programs[index1] = _programs[index2];
+                _programs[index2] = temp;
+            }
+        }
+
+        const str = _programs.join("");
+        const indexOfDuplicated = records.indexOf(str);
+
+        if (indexOfDuplicated !== -1)
+        {
+            loopStartPrograms = _programs;
+            loopSize = counter - indexOfDuplicated;
+            records.push(str);
+            break;
+        }
+
+        records.push(str);
+    }
+
+    if (loopStartPrograms)
+    {
+        return executeInstructions(instructions, loopStartPrograms, repeat % loopSize);
+    } else {
+        return _programs;
+    }
 };
 
 const parseInstruction = (str) =>

@@ -16,7 +16,7 @@ test('task 01 example', () => {
 });
 
 test('task 02 example', () => {
-    // expect(letThemDance2(16, "s6,s2,s14,x1/2", 1)).toEqual("kmlnopabcdefghij");
-    // expect(letThemDance2(5, "s1,x3/4,pe/b", 1)).toEqual("baedc");
+    expect(letThemDance2(16, "s6,s2,s14,x1/2", 1)).toEqual("kmlnopabcdefghij");
+    expect(letThemDance2(5, "s1,x3/4,pe/b", 1)).toEqual("baedc");
     expect(letThemDance2(5, "s1,x3/4,pe/b", 2)).toEqual("ceadb");
 });

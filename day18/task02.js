@@ -25,7 +25,7 @@ export const countSendings = (input) =>
         {
             return program1.sendingCounter;
         }
-        return reason;
+        throw reason;
     });
 };
 
